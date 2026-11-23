@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Guru Nanak Quiz — Join</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0d1b3e;
+      --navy2:  #162448;
+      --gold:   #f5c518;
+      --white:  #ffffff;
+      --muted:  #a0aec0;
+      --red:    #e21b3c;
+      --blue:   #1368ce;
+      --yellow: #c9a000;
+      --green:  #26890c;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; width: 100%; max-width: 440px; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    /* ── Shared ── */
+    .logo { font-size: 0.85rem; color: var(--muted); letter-spacing: 1px; margin-bottom: 0.6rem; text-align: center; }
+    h1 { font-size: 1.8rem; font-weight: 900; color: var(--gold); text-align: center; margin-bottom: 0.4rem; }
+    h2 { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 0.6rem; }
+    .sub { color: var(--muted); text-align: center; margin-bottom: 1.2rem; font-size: 0.95rem; }
+
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      margin-top: 0.6rem;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-gold { background: var(--gold); color: var(--navy); }
+    .btn-gold:hover { opacity: 0.9; }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius);
+      border: 2px solid #2a3d6e;
+      background: var(--navy2);
+      color: var(--white);
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      outline: none;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+    input[type="text"]:focus { border-color: var(--gold); }
+    input[type="text"]::placeholder { color: #4a5a7e; letter-spacing: 1px; font-weight: 400; }
+
+    .error-msg { color: #ff6b6b; font-size: 0.9rem; margin-bottom: 0.6rem; text-align: center; min-height: 1.2rem; }
+
+    /* ── Waiting screen ── */
+    .spinner {
+      width: 50px; height: 50px;
+      border: 5px solid var(--navy2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .waiting-name { font-size: 1.2rem; font-weight: 900; color: var(--gold); margin-bottom: 0.3rem; }
+
+    /* ── Question screen (answer buttons) ── */
+    #screen-question { justify-content: flex-start; padding-top: 0.5rem; height: 100%; }
+
+    .q-info {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 0.8rem;
+    }
+    .q-num { color: var(--muted); font-size: 0.9rem; font-weight: 700; }
+    .q-timer {
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .timer-wrap {
+      background: var(--navy2);
+      border-radius: 999px;
+      height: 10px;
+      width: 100%;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    #p-timer-bar {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 999px;
+      width: 100%;
+      transition: width linear;
+    }
+
+    .choose-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    .ans-btn {
+      border-radius: var(--radius);
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      min-height: 100px;
+      transition: transform 0.1s, opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ans-btn:active { transform: scale(0.95); }
+    .ans-btn.opt-0 { background: var(--red); }
+    .ans-btn.opt-1 { background: var(--blue); }
+    .ans-btn.opt-2 { background: var(--yellow); }
+    .ans-btn.opt-3 { background: var(--green); }
+    .ans-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ans-btn.selected { outline: 4px solid white; }
+
+    /* ── Feedback screen ── */
+    #screen-feedback { text-align: center; }
+    .feedback-icon { font-size: 5rem; margin-bottom: 0.5rem; }
+    .feedback-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 0.3rem; }
+    .feedback-title.correct { color: #4ade80; }
+    .feedback-title.wrong   { color: #f87171; }
+    .points-earned { font-size: 1.3rem; color: var(--gold); font-weight: 700; margin-bottom: 0.4rem; }
+    .total-score   { color: var(--muted); font-size: 1rem; }
+    .correct-was   { margin-top: 1rem; background: var(--navy2); border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.95rem; }
+    .correct-was span { color: var(--gold); font-weight: 700; }
+
+    /* ── Rank screen ── */
+    #screen-rank { text-align: center; }
+    .rank-badge { font-size: 4rem; margin-bottom: 0.4rem; }
+    .rank-text  { font-size: 1.3rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .rank-score { font-size: 2rem; font-weight: 900; color: var(--gold); }
+
+    /* ── Game Over screen ── */
+    #screen-gameover-p { text-align: center; }
+    .go-trophy { font-size: 4rem; }
+    .go-title  { font-size: 1.5rem; font-weight: 900; color: var(--gold); margin: 0.6rem 0 0.3rem; }
+    .go-sub    { color: var(--muted); font-size: 1rem; }
+    .go-winner { font-size: 1.2rem; font-weight: 700; color: var(--white); margin-top: 0.8rem; }
+
+    .waiting-msg { color: var(--muted); text-align: center; font-size: 0.95rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ JOIN ══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-join" class="screen active">
+    <p class="logo">🪬 GURU NANAK DEV JI QUIZ</p>
+    <h1>Join Game</h1>
+    <p class="sub">Enter the PIN shown on the host screen</p>
+
+    <input type="text" id="pin-input" placeholder="Game PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+    <input type="text" id="name-input" placeholder="Your Nickname" maxlength="20" autocomplete="off" />
+    <p class="error-msg" id="join-error"></p>
+    <button class="btn btn-gold" onclick="joinGame()">Join ›</button>
+  </section>
+
+  <!-- ══ WAITING ════════════════════════════════════════════════════════════════ -->
+  <section id="screen-waiting" class="screen">
+    <p class="logo">🪬 GURU NANAK DEV JI QUIZ</p>
+    <div class="spinner"></div>
+    <div class="waiting-name" id="waiting-name">Player</div>
+    <p class="sub">You're in! Waiting for the host to start…</p>
+  </section>
+
+  <!-- ══ QUESTION ═══════════════════════════════════════════════════════════════ -->
+  <section id="screen-question" class="screen">
+    <div class="q-info">
+      <span class="q-num" id="p-q-num">Q 1/25</span>
+      <span class="q-timer" id="p-timer-label">20</span>
+    </div>
+    <div class="timer-wrap"><div id="p-timer-bar"></div></div>
+    <p class="choose-label">Choose your answer!</p>
+    <div class="answer-grid">
+      <button class="ans-btn opt-0" onclick="submitAnswer(0)">▲</button>
+      <button class="ans-btn opt-1" onclick="submitAnswer(1)">◆</button>
+      <button class="ans-btn opt-2" onclick="submitAnswer(2)">●</button>
+      <button class="ans-btn opt-3" onclick="submitAnswer(3)">■</button>
+    </div>
+  </section>
+
+  <!-- ══ FEEDBACK ═══════════════════════════════════════════════════════════════ -->
+  <section id="screen-feedback" class="screen">
+    <div class="feedback-icon" id="feedback-icon">✅</div>
+    <div class="feedback-title" id="feedback-title">Correct!</div>
+    <div class="points-earned" id="points-earned">+850 pts</div>
+    <div class="total-score" id="total-score">Total: 850 pts</div>
+    <div class="correct-was" id="correct-was-box" style="display:none">
+      Correct answer: <span id="correct-was-text">—</span>
+    </div>
+    <p class="waiting-msg">Waiting for host…</p>
+  </section>
+
+  <!-- ══ RANK ════════════════════════════════════════════════════════════════════ -->
+  <section id="screen-rank" class="screen">
+    <div class="rank-badge" id="rank-badge">🏅</div>
+    <div class="rank-text" id="rank-text">You are #1 of 10 players</div>
+    <div class="rank-score" id="rank-score">0 pts</div>
+    <p class="waiting-msg">Waiting for next question…</p>
+  </section>
+
+  <!-- ══ GAME OVER (player view) ════════════════════════════════════════════════ -->
+  <section id="screen-gameover-p" class="screen">
+    <div class="go-trophy">🏆</div>
+    <div class="go-title" id="go-title">Game Over!</div>
+    <div class="go-sub" id="go-sub">Thanks for playing</div>
+    <div class="go-winner" id="go-winner"></div>
+    <button class="btn btn-gold" style="margin-top:1.5rem" onclick="location.reload()">Play Again</button>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  let myNickname = '';
+  let currentPin = '';
+  let currentQuestionIndex = 0;
+  let totalQuestions = 25;
+  let timerInterval = null;
+  let timerSeconds = 20;
+  let myTotalScore = 0;
+
+  // ── Pre-fill PIN from URL query param ──────────────────────────────────────
+  (function prefillPin() {
+    const params = new URLSearchParams(window.location.search);
+    const pin = params.get('pin');
+    if (pin) document.getElementById('pin-input').value = pin;
+  })();
+
+  // ── Join ───────────────────────────────────────────────────────────────────
+  function joinGame() {
+    const pin = document.getElementById('pin-input').value.trim();
+    const nickname = document.getElementById('name-input').value.trim();
+    const errEl = document.getElementById('join-error');
+    errEl.textContent = '';
+
+    if (!pin || pin.length !== 4) { errEl.textContent = 'Enter a valid 4-digit PIN.'; return; }
+    if (!nickname) { errEl.textContent = 'Enter a nickname.'; return; }
+    if (nickname.length > 20) { errEl.textContent = 'Nickname too long (max 20 chars).'; return; }
+
+    myNickname = nickname;
+    currentPin = pin;
+    socket.emit('join-game', { pin, nickname });
+  }
+
+  socket.on('join-ok', ({ nickname }) => {
+    document.getElementById('waiting-name').textContent = nickname;
+    showScreen('screen-waiting');
+  });
+
+  socket.on('join-error', ({ message }) => {
+    document.getElementById('join-error').textContent = message;
+  });
+
+  // ── Question ───────────────────────────────────────────────────────────────
+  socket.on('question-start', ({ questionIndex, totalQuestions: total, timeLimit }) => {
+    currentQuestionIndex = questionIndex;
+    totalQuestions = total;
+    timerSeconds = timeLimit;
+
+    document.getElementById('p-q-num').textContent = `Q ${questionIndex + 1}/${total}`;
+
+    // re-enable all buttons, remove selected state
+    document.querySelectorAll('.ans-btn').forEach(b => {
+      b.disabled = false;
+      b.classList.remove('selected');
+    });
+
+    startTimer(timeLimit);
+    showScreen('screen-question');
+  });
+
+  function startTimer(seconds) {
+    stopTimer();
+    const bar = document.getElementById('p-timer-bar');
+    const label = document.getElementById('p-timer-label');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    let remaining = seconds;
+    label.textContent = remaining;
+
+    setTimeout(() => {
+      bar.style.transition = `width ${seconds}s linear`;
+      bar.style.width = '0%';
+    }, 50);
+
+    timerInterval = setInterval(() => {
+      remaining--;
+      label.textContent = Math.max(0, remaining);
+      if (remaining <= 0) {
+        stopTimer();
+        // disable buttons when time runs out
+        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  // ── Submit answer ──────────────────────────────────────────────────────────
+  function submitAnswer(index) {
+    stopTimer();
+    // disable all buttons immediately
+    document.querySelectorAll('.ans-btn').forEach((b, i) => {
+      b.disabled = true;
+      if (i === index) b.classList.add('selected');
+    });
+    socket.emit('submit-answer', { pin: currentPin, answerIndex: index });
+  }
+
+  // ── Answer result ──────────────────────────────────────────────────────────
+  socket.on('answer-result', ({ correct, pointsEarned, totalScore, correctIndex }) => {
+    myTotalScore = totalScore;
+
+    document.getElementById('feedback-icon').textContent   = correct ? '✅' : '❌';
+    document.getElementById('feedback-title').textContent  = correct ? 'Correct!' : 'Wrong!';
+    document.getElementById('feedback-title').className    = `feedback-title ${correct ? 'correct' : 'wrong'}`;
+    document.getElementById('points-earned').textContent   = correct ? `+${pointsEarned.toLocaleString()} pts` : '+0 pts';
+    document.getElementById('total-score').textContent     = `Total: ${totalScore.toLocaleString()} pts`;
+
+    // show correct answer hint if wrong
+    const cwBox = document.getElementById('correct-was-box');
+    if (!correct) {
+      const shapes = ['▲', '◆', '●', '■'];
+      document.getElementById('correct-was-text').textContent = shapes[correctIndex];
+      cwBox.style.display = 'block';
+    } else {
+      cwBox.style.display = 'none';
+    }
+
+    showScreen('screen-feedback');
+  });
+
+  // ── Leaderboard (player rank view) ────────────────────────────────────────
+  socket.on('leaderboard', ({ leaderboard }) => {
+    const myEntry = leaderboard.find(p => p.nickname === myNickname);
+    const rankMedals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+    if (myEntry) {
+      document.getElementById('rank-badge').textContent = rankMedals[myEntry.rank - 1] || `#${myEntry.rank}`;
+      document.getElementById('rank-text').textContent  = `You are #${myEntry.rank} of ${getTotalPlayers(leaderboard)} players`;
+      document.getElementById('rank-score').textContent = `${myEntry.score.toLocaleString()} pts`;
+    } else {
+      // player not in top 5 — show their score
+      document.getElementById('rank-badge').textContent = '🏅';
+      document.getElementById('rank-text').textContent  = 'Keep going!';
+      document.getElementById('rank-score').textContent = `${myTotalScore.toLocaleString()} pts`;
+    }
+    showScreen('screen-rank');
+  });
+
+  // ── Game Over ──────────────────────────────────────────────────────────────
+  socket.on('game-over', ({ leaderboard }) => {
+    stopTimer();
+    const winner = leaderboard[0];
+    const isWinner = winner && winner.nickname === myNickname;
+
+    document.getElementById('go-title').textContent = isWinner ? '🎉 You Won!' : 'Game Over!';
+    document.getElementById('go-sub').textContent   = isWinner
+      ? `Waheguru! You scored ${myTotalScore.toLocaleString()} pts`
+      : `Final score: ${myTotalScore.toLocaleString()} pts`;
+    document.getElementById('go-winner').textContent = winner
+      ? `🏆 Winner: ${winner.nickname} (${winner.score.toLocaleString()} pts)`
+      : '';
+
+    showScreen('screen-gameover-p');
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function getTotalPlayers(leaderboard) {
+    // leaderboard is capped at 5; we don't have exact total here, return "5+" if full
+    return leaderboard.length >= 5 ? leaderboard.length + '+' : leaderboard.length;
+  }
+
+  // Allow Enter key on join form
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('screen-join').classList.contains('active')) {
+      joinGame();
+    }
+  });
+</script>
+</body>
+</html>

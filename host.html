@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guru Nanak Quiz — Host</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0d1b3e;
+      --navy2:  #162448;
+      --gold:   #f5c518;
+      --gold2:  #e6a800;
+      --white:  #ffffff;
+      --muted:  #a0aec0;
+      --red:    #e21b3c;
+      --blue:   #1368ce;
+      --yellow: #d89e00;
+      --green:  #26890c;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* ── Sections ── */
+    .screen { display: none; width: 100%; max-width: 1000px; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    /* ── Shared ── */
+    h1 { font-size: 2.4rem; font-weight: 900; color: var(--gold); text-align: center; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.6rem; font-weight: 700; text-align: center; margin-bottom: 1rem; }
+    p.sub  { color: var(--muted); text-align: center; margin-bottom: 1.5rem; font-size: 1rem; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 2.2rem;
+      border-radius: var(--radius);
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-gold  { background: var(--gold); color: var(--navy); }
+    .btn-gold:hover { background: var(--gold2); }
+    .btn-outline { background: transparent; color: var(--white); border: 2px solid var(--white); }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); }
+    .btn-green { background: var(--green); color: var(--white); }
+    .btn-green:hover { opacity: 0.9; }
+
+    /* ── Category Select Screen ── */
+    #screen-category .card-row {
+      display: flex;
+      gap: 2rem;
+      margin: 1.5rem 0 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .cat-card {
+      background: var(--navy2);
+      border: 3px solid transparent;
+      border-radius: var(--radius);
+      padding: 2rem 2.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.1s;
+      min-width: 220px;
+    }
+    .cat-card:hover { transform: translateY(-3px); border-color: var(--gold); }
+    .cat-card.selected { border-color: var(--gold); background: #1e3366; }
+    .cat-card .emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+    .cat-card h3 { font-size: 1.3rem; font-weight: 900; color: var(--gold); }
+    .cat-card p  { font-size: 0.9rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── Lobby Screen ── */
+    #screen-lobby .pin-box {
+      background: var(--navy2);
+      border-radius: var(--radius);
+      padding: 1.2rem 2.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    #screen-lobby .pin-box .label { color: var(--muted); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; }
+    #screen-lobby .pin-box .pin   { font-size: 4rem; font-weight: 900; color: var(--gold); letter-spacing: 8px; }
+
+    .lobby-layout {
+      display: flex;
+      gap: 2rem;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    #qr-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #qr-box img { width: 180px; height: 180px; }
+    #qr-box .qr-label { color: var(--navy); font-size: 0.75rem; font-weight: 700; text-align: center; }
+
+    #player-list-box {
+      background: var(--navy2);
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      flex: 1;
+      min-width: 260px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    #player-list-box h3 { font-size: 1rem; color: var(--muted); margin-bottom: 0.8rem; }
+    #player-count { color: var(--gold); font-weight: 900; }
+    #player-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    #player-list li {
+      background: #1e3366;
+      border-radius: 8px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      animation: pop 0.25s ease;
+    }
+    @keyframes pop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* ── Question Screen ── */
+    #screen-question {
+      width: 100%;
+      max-width: 1000px;
+    }
+    .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .q-counter { color: var(--muted); font-size: 1rem; font-weight: 700; }
+    .answer-badge {
+      background: var(--navy2);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-size: 0.9rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    /* Timer bar */
+    .timer-wrap {
+      background: var(--navy2);
+      border-radius: 999px;
+      height: 14px;
+      width: 100%;
+      margin-bottom: 1.2rem;
+      overflow: hidden;
+    }
+    #timer-bar {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 999px;
+      width: 100%;
+      transition: width linear;
+    }
+
+    .question-box {
+      background: var(--navy2);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .opt-btn {
+      border-radius: var(--radius);
+      padding: 1.1rem 1.2rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--white);
+      border: none;
+      cursor: default;
+      opacity: 0.95;
+      text-align: left;
+    }
+    .opt-btn .shape { font-size: 1.3rem; flex-shrink: 0; }
+    .opt-btn.opt-0 { background: var(--red); }
+    .opt-btn.opt-1 { background: var(--blue); }
+    .opt-btn.opt-2 { background: #c9a000; }
+    .opt-btn.opt-3 { background: var(--green); }
+    .opt-btn.correct-answer { outline: 4px solid white; transform: scale(1.03); }
+
+    /* ── Leaderboard Screen ── */
+    #screen-leaderboard { width: 100%; max-width: 600px; }
+    .lb-list { width: 100%; list-style: none; display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0 1.5rem; }
+    .lb-item {
+      background: var(--navy2);
+      border-radius: var(--radius);
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .lb-item .rank { font-size: 1.5rem; min-width: 2rem; text-align: center; }
+    .lb-item .name { flex: 1; }
+    .lb-item .score { color: var(--gold); font-size: 1.2rem; }
+    .lb-item.rank-1 { background: #2a1f00; border: 2px solid var(--gold); }
+    .lb-item.rank-2 { background: #1e2535; border: 2px solid #c0c0c0; }
+    .lb-item.rank-3 { background: #1e1a10; border: 2px solid #cd7f32; }
+
+    /* ── Game Over Screen ── */
+    #screen-gameover { text-align: center; width: 100%; max-width: 640px; }
+    .trophy { font-size: 5rem; margin-bottom: 0.5rem; animation: bounce 0.8s ease infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+    #winner-name { font-size: 2.5rem; font-weight: 900; color: var(--gold); margin: 0.5rem 0 0.3rem; }
+    #winner-score { color: var(--muted); font-size: 1.1rem; margin-bottom: 1.5rem; }
+    #final-lb-list { width: 100%; list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      animation: fall linear forwards;
+      pointer-events: none;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Utility ── */
+    .hidden { display: none !important; }
+    .row-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .logo { font-size: 1rem; color: var(--muted); margin-bottom: 0.5rem; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SCREEN: CATEGORY SELECT ════════════════════ -->
+<section id="screen-category" class="screen active">
+  <p class="logo">🪬 GURU NANAK DEV JI QUIZ</p>
+  <h1>Host Dashboard</h1>
+  <p class="sub">Select a quiz category to create a new game</p>
+
+  <div class="card-row">
+    <div class="cat-card" id="card-junior" onclick="selectCategory('junior')">
+      <div class="emoji">🌱</div>
+      <h3>Junior</h3>
+      <p>Ages 15 – 18<br/>Easy / Medium<br/>25 Questions</p>
+    </div>
+    <div class="cat-card" id="card-senior" onclick="selectCategory('senior')">
+      <div class="emoji">📖</div>
+      <h3>Senior</h3>
+      <p>Ages 18+<br/>Medium / Hard<br/>25 Questions</p>
+    </div>
+  </div>
+
+  <button class="btn btn-gold" id="btn-create" onclick="createGame()" disabled>Create Game</button>
+</section>
+
+<!-- ═══════════════════════════════ SCREEN: LOBBY ══════════════════════════════ -->
+<section id="screen-lobby" class="screen">
+  <p class="logo">🪬 GURU NANAK DEV JI QUIZ</p>
+  <h1 id="lobby-category-label">Junior Quiz</h1>
+  <p class="sub">Share the PIN or QR code — players join from their phones</p>
+
+  <div class="pin-box">
+    <div class="label">Game PIN</div>
+    <div class="pin" id="pin-display">----</div>
+  </div>
+
+  <div class="lobby-layout">
+    <div id="qr-box">
+      <img id="qr-img" src="" alt="QR Code" />
+      <div class="qr-label">Scan to join</div>
+    </div>
+    <div id="player-list-box">
+      <h3>Players joined: <span id="player-count">0</span></h3>
+      <ul id="player-list"></ul>
+    </div>
+  </div>
+
+  <button class="btn btn-green" id="btn-start" onclick="startGame()">▶ Start Game</button>
+</section>
+
+<!-- ═══════════════════════════════ SCREEN: QUESTION ══════════════════════════ -->
+<section id="screen-question" class="screen">
+  <div class="q-header">
+    <span class="q-counter" id="q-counter">Question 1 / 25</span>
+    <span class="answer-badge" id="answer-badge">✏️ 0 answered</span>
+  </div>
+
+  <div class="timer-wrap"><div id="timer-bar"></div></div>
+
+  <div class="question-box" id="question-text">Loading…</div>
+
+  <div class="options-grid" id="options-grid">
+    <div class="opt-btn opt-0"><span class="shape">▲</span><span id="opt-0"></span></div>
+    <div class="opt-btn opt-1"><span class="shape">◆</span><span id="opt-1"></span></div>
+    <div class="opt-btn opt-2"><span class="shape">●</span><span id="opt-2"></span></div>
+    <div class="opt-btn opt-3"><span class="shape">■</span><span id="opt-3"></span></div>
+  </div>
+
+  <div class="row-btns">
+    <button class="btn btn-gold" id="btn-reveal" onclick="revealAnswer()" style="display:none">Show Answer</button>
+    <button class="btn btn-gold" id="btn-leaderboard" onclick="showLeaderboard()" style="display:none">📊 Leaderboard</button>
+    <button class="btn btn-outline" id="btn-next" onclick="nextQuestion()" style="display:none">Next Question ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SCREEN: LEADERBOARD ════════════════════════ -->
+<section id="screen-leaderboard" class="screen">
+  <h2>📊 Leaderboard</h2>
+  <p class="sub" id="lb-subtitle">After question 1</p>
+  <ul class="lb-list" id="lb-list"></ul>
+  <div class="row-btns">
+    <button class="btn btn-gold" id="btn-next-from-lb" onclick="nextQuestion()">Next Question ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SCREEN: GAME OVER ══════════════════════════ -->
+<section id="screen-gameover" class="screen">
+  <div class="trophy">🏆</div>
+  <p style="color:var(--muted); font-size:1rem;">WINNER</p>
+  <div id="winner-name">—</div>
+  <div id="winner-score">Score: 0 pts</div>
+  <h2 style="margin-bottom:0.5rem;">Final Top 5</h2>
+  <ul class="lb-list" id="final-lb-list"></ul>
+  <button class="btn btn-gold" onclick="location.reload()">🔄 New Game</button>
+</section>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  let selectedCategory = null;
+  let currentPin = null;
+  let currentQuestionIndex = 0;
+  let totalQuestions = 25;
+  let timerInterval = null;
+  let isRevealed = false;
+  let correctIndex = -1;
+
+  // ── Category selection ────────────────────────────────────────────────────
+  function selectCategory(cat) {
+    selectedCategory = cat;
+    document.getElementById('card-junior').classList.toggle('selected', cat === 'junior');
+    document.getElementById('card-senior').classList.toggle('selected', cat === 'senior');
+    document.getElementById('btn-create').disabled = false;
+  }
+
+  function createGame() {
+    if (!selectedCategory) return;
+    socket.emit('create-game', { category: selectedCategory });
+  }
+
+  socket.on('game-created', ({ pin, qrDataUrl, playerUrl }) => {
+    currentPin = pin;
+    document.getElementById('pin-display').textContent = pin;
+    document.getElementById('lobby-category-label').textContent =
+      selectedCategory === 'junior' ? '🌱 Junior Quiz (Ages 15–18)' : '📖 Senior Quiz (Ages 18+)';
+    if (qrDataUrl) {
+      document.getElementById('qr-img').src = qrDataUrl;
+    }
+    showScreen('screen-lobby');
+  });
+
+  // ── Lobby ─────────────────────────────────────────────────────────────────
+  socket.on('player-joined', ({ nickname, playerCount }) => {
+    document.getElementById('player-count').textContent = playerCount;
+    const li = document.createElement('li');
+    li.textContent = nickname;
+    document.getElementById('player-list').appendChild(li);
+  });
+
+  function startGame() {
+    socket.emit('start-game', { pin: currentPin });
+  }
+
+  // ── Question ──────────────────────────────────────────────────────────────
+  socket.on('question-start', ({ questionIndex, totalQuestions: total, question, options, timeLimit }) => {
+    currentQuestionIndex = questionIndex;
+    totalQuestions = total;
+    isRevealed = false;
+    correctIndex = -1;
+
+    document.getElementById('q-counter').textContent = `Question ${questionIndex + 1} / ${total}`;
+    document.getElementById('answer-badge').textContent = `✏️ 0 answered`;
+    document.getElementById('question-text').textContent = question;
+
+    for (let i = 0; i < 4; i++) {
+      document.getElementById(`opt-${i}`).textContent = options[i];
+      const btn = document.querySelectorAll('.opt-btn')[i];
+      btn.classList.remove('correct-answer');
+    }
+
+    // hide action buttons initially
+    document.getElementById('btn-reveal').style.display = 'none';
+    document.getElementById('btn-leaderboard').style.display = 'none';
+    document.getElementById('btn-next').style.display = 'none';
+
+    startTimer(timeLimit);
+    showScreen('screen-question');
+  });
+
+  socket.on('answer-received', ({ answered, total }) => {
+    document.getElementById('answer-badge').textContent = `✏️ ${answered} / ${total} answered`;
+    // when all answered, stop timer and show reveal button
+    if (answered >= total) {
+      stopTimer();
+      showRevealButton();
+    }
+  });
+
+  function startTimer(seconds) {
+    stopTimer();
+    const bar = document.getElementById('timer-bar');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    setTimeout(() => {
+      bar.style.transition = `width ${seconds}s linear`;
+      bar.style.width = '0%';
+    }, 50);
+
+    timerInterval = setTimeout(() => {
+      showRevealButton();
+    }, seconds * 1000);
+  }
+
+  function stopTimer() {
+    clearTimeout(timerInterval);
+    timerInterval = null;
+  }
+
+  function showRevealButton() {
+    document.getElementById('btn-reveal').style.display = 'inline-block';
+  }
+
+  function revealAnswer() {
+    isRevealed = true;
+    // ask server to broadcast correct answer (we store it locally from question-start is not possible)
+    // correctIndex is unknown on host — the server must tell us
+    socket.emit('request-reveal', { pin: currentPin });
+  }
+
+  socket.on('reveal-answer', ({ correctIndex: ci }) => {
+    correctIndex = ci;
+    const btn = document.querySelectorAll('.opt-btn')[ci];
+    if (btn) btn.classList.add('correct-answer');
+    document.getElementById('btn-reveal').style.display = 'none';
+    document.getElementById('btn-leaderboard').style.display = 'inline-block';
+    document.getElementById('btn-next').style.display = 'inline-block';
+  });
+
+  function showLeaderboard() {
+    socket.emit('show-leaderboard', { pin: currentPin });
+  }
+
+  socket.on('leaderboard', ({ leaderboard }) => {
+    renderLeaderboard('lb-list', leaderboard);
+    document.getElementById('lb-subtitle').textContent =
+      `After question ${currentQuestionIndex + 1} of ${totalQuestions}`;
+
+    // hide next-from-lb if this is last question
+    document.getElementById('btn-next-from-lb').style.display =
+      (currentQuestionIndex + 1 >= totalQuestions) ? 'none' : 'inline-block';
+
+    showScreen('screen-leaderboard');
+  });
+
+  function nextQuestion() {
+    socket.emit('next-question', { pin: currentPin });
+  }
+
+  // ── Game Over ─────────────────────────────────────────────────────────────
+  socket.on('game-over', ({ leaderboard }) => {
+    stopTimer();
+    if (leaderboard.length > 0) {
+      document.getElementById('winner-name').textContent = leaderboard[0].nickname;
+      document.getElementById('winner-score').textContent = `Score: ${leaderboard[0].score.toLocaleString()} pts`;
+    }
+    renderLeaderboard('final-lb-list', leaderboard);
+    launchConfetti();
+    showScreen('screen-gameover');
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const MEDALS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+  function renderLeaderboard(listId, leaderboard) {
+    const ul = document.getElementById(listId);
+    ul.innerHTML = '';
+    leaderboard.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.className = `lb-item rank-${i + 1}`;
+      li.innerHTML = `
+        <span class="rank">${MEDALS[i] || i + 1}</span>
+        <span class="name">${escHtml(p.nickname)}</span>
+        <span class="score">${p.score.toLocaleString()} pts</span>
+      `;
+      ul.appendChild(li);
+    });
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function launchConfetti() {
+    const colors = ['#f5c518','#e21b3c','#1368ce','#26890c','#ffffff'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+      el.style.animationDelay = (Math.random() * 1) + 's';
+      el.style.width = el.style.height = (8 + Math.random() * 8) + 'px';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+  }
+</script>
+</body>
+</html>

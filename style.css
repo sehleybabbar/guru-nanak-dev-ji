@@ -1,0 +1,21 @@
+/*
+ * Guru Nanak Dev Ji Quiz — Shared Design System
+ * Both host.html and player.html inline their own styles for self-containment.
+ * This file provides global resets and any shared print/meta styles.
+ * Individual page styling is embedded in each HTML file's <style> block.
+ */
+
+/* ── Global reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Scrollbar styling (Webkit) ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d1b3e; }
+::-webkit-scrollbar-thumb { background: #2a3d6e; border-radius: 3px; }
+
+/* ── Selection color ── */
+::selection { background: #f5c518; color: #0d1b3e; }
